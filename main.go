@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/gin-contrib/size"
+	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
 
@@ -20,6 +20,10 @@ import (
 )
 
 func main() {
+	run()
+}
+
+func run() {
 	url, user, password, listenAddr, credential := conf.ReadConf()
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/image_bed", user, password, url))
 	if err != nil {
@@ -33,8 +37,8 @@ func main() {
 	dbInstance := dbb.InitDB(db)
 
 	router := gin.New()
-	// 32MB return 413
-	router.Use(limits.RequestSizeLimiter(4<<23))
+	// todo
+	router.Use(limits.RequestSizeLimiter(32 * 1024 * 1024))
 
 	api := handle.New(dbInstance, credential)
 	router.POST("upload", api.Upload)

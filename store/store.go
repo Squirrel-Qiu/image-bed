@@ -31,7 +31,8 @@ func Store(hash string, db dbb.DBApi) (bucket, resourceId string, err error) {
 
 	// id/generate
 	if len(g.IdList) == 0 {
-		idValue, err := db.GetIdValue(g.IdType) // 原子操作
+		// todo  原子操作
+		idValue, err := db.GetIdValue(g.IdType)
 		if err != nil {
 			return "", "", xerrors.Errorf("get id value failed: %w", err)
 		}
@@ -48,8 +49,10 @@ func Store(hash string, db dbb.DBApi) (bucket, resourceId string, err error) {
 	resource.Id = g.IdList[len(g.IdList)-1]
 	g.IdList = g.IdList[:len(g.IdList)]
 
-	resource.Bucket = time.Now().Format("2006-01")
-	resource.CreateTime = time.Now().Format("2006-01-02 15:04")
+	now := time.Now()
+
+	resource.Bucket = now.Format("2006-01")
+	resource.CreateTime = now.Format("2006-01-02 15:04")
 	resource.Hash = hash
 	//resource.Size = uint32(len(data))
 

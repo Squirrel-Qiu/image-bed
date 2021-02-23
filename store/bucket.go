@@ -47,17 +47,3 @@ func (me *CloudClient) Sign() *s3.S3 {
 
 	return s3.New(sess)
 }
-
-func (me *CloudClient) Create(bucket *string) {
-	me.cosConn.CreateBucketRequest(&s3.CreateBucketInput{
-		ACL:                        nil,
-		Bucket:                     bucket,
-		CreateBucketConfiguration:  nil,
-		GrantFullControl:           nil,
-		GrantRead:                  nil,
-		GrantReadACP:               nil,
-		GrantWrite:                 nil,
-		GrantWriteACP:              nil,
-		ObjectLockEnabledForBucket: nil,
-	})
-}

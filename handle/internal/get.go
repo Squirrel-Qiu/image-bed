@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"io"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -10,13 +12,18 @@ import (
 	"github.com/Squirrel-Qiu/image-bed/store"
 )
 
-func (impl Implement) Get(ctx *gin.Context) {
+func (impl *Implement) Get(ctx *gin.Context) {
 	resourceId := ctx.Param("resourceId")
 
-	bucket, ok, err := impl.DB.FileIsExistById(resourceId)
-	if err != nil {
-		logrus.Errorf("1 failed: %+v", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"msg": "对象不存在"})
+	ok, bucket, err := impl.DB.FileIsExistById(resourceId)
+	if !ok {
+		if err != nil {
+			logrus.Errorf("db check file is exist by id failed: %+v", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
+		logrus.Info("the required file is not exist")
+		ctx.Status(http.StatusBadRequest)
 		return
 	}
 
@@ -24,32 +31,26 @@ func (impl Implement) Get(ctx *gin.Context) {
 	cosConn := cosClient.Sign()
 
 	getObjectOutput, err := cosConn.GetObject(&s3.GetObjectInput{
-		Bucket:                     &bucket,
-		ExpectedBucketOwner:        nil,
-		IfMatch:                    nil,
-		IfModifiedSince:            nil,
-		IfNoneMatch:                nil,
-		IfUnmodifiedSince:          nil,
-		Key:                        &resourceId,
-		PartNumber:                 nil,
-		Range:                      nil,
-		RequestPayer:               nil,
-		ResponseCacheControl:       nil,
-		ResponseContentDisposition: nil,
-		ResponseContentEncoding:    nil,
-		ResponseContentLanguage:    nil,
-		ResponseContentType:        nil,
-		ResponseExpires:            nil,
-		SSECustomerAlgorithm:       nil,
-		SSECustomerKey:             nil,
-		SSECustomerKeyMD5:          nil,
-		VersionId:                  nil,
+		Bucket: &bucket,
+		Key:    &resourceId,
 	})
 	if err != nil {
-		logrus.Errorf("cosConn get object failed: %+v", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"msg": "对象获取失败"})
-		return
+		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == s3.ErrCodeNoSuchKey {
+				logrus.Errorf("the required file is not exist: %+v", err)
+				ctx.Status(http.StatusBadRequest)
+				return
+			}
+		} else {
+			logrus.Errorf("cosConn get object failed: %+v", err)
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"": getObjectOutput.Body})
+	if _, err := io.Copy(ctx.Writer, getObjectOutput.Body); err != nil {
+		logrus.Errorf("copy object failed: %+v", err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 }

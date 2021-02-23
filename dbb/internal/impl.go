@@ -36,34 +36,34 @@ func (db *Impl) Store(resource *store.Resource) (err error) {
 	return nil
 }
 
-func (db *Impl) FileIsExistByHash(hash string) (resourceId string, ok bool) {
-	err := db.DB.QueryRow("SELECT id FROM resource WHERE hash=?", hash).Scan(&resourceId)
+func (db *Impl) FileIsExistByHash(hash string) (ok bool, resourceId string, err error) {
+	err = db.DB.QueryRow("SELECT id FROM resource WHERE hash=?", hash).Scan(&resourceId)
 	switch {
 	case xerrors.Is(err, sql.ErrNoRows):
-		return false, err
+		return true, "", nil
 
 	default:
-		return false, err
+		return false, "", xerrors.Errorf("scan failed: %w", err)
 
 	case err == nil:
 	}
 
-	return resourceId, true
+	return false, resourceId, nil
 }
 
-func (db *Impl) FileIsExistById(resourceId string) (bucket string, ok bool, err error) {
+func (db *Impl) FileIsExistById(resourceId string) (ok bool, bucket string, err error) {
 	err = db.DB.QueryRow("SELECT bucket FROM resource WHERE id=?", resourceId).Scan(&bucket)
 	switch {
 	case xerrors.Is(err, sql.ErrNoRows):
-		return "", false, xerrors.Errorf("db file is not exist: %w", err)
+		return false, "", nil
 
 	default:
-		return "", false, xerrors.Errorf("db judge file if exist by id failed: %w", err)
+		return false, "", xerrors.Errorf("scan failed: %w", err)
 
 	case err == nil:
 	}
 
-	return bucket, true, nil
+	return true, bucket, nil
 }
 
 func (db *Impl) Close() error {
