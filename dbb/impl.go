@@ -1,11 +1,11 @@
-package internal
+package dbb
 
 import (
 	"database/sql"
 
 	"golang.org/x/xerrors"
 
-	"github.com/Squirrel-Qiu/image-bed/store"
+	"github.com/Squirrel-Qiu/image-bed/handle"
 )
 
 type Impl struct {
@@ -26,11 +26,11 @@ func (db *Impl) GetIdValue(idType string) (idValue int64, err error) {
 	return idValue, nil
 }
 
-func (db *Impl) Store(resource *store.Resource) (err error) {
+func (db *Impl) Store(resource *handle.Resource) (err error) {
 	_, err = db.DB.Exec("INSERT INTO resource (id, bucket, hash, create_time, size) VALUES (?,?,?,?,?)",
 		resource.Id, resource.Bucket, resource.Hash, resource.CreateTime, resource.Size)
 	if err != nil {
-		return xerrors.Errorf("store resource failed: %w", err)
+		return xerrors.Errorf("insert resource failed: %w", err)
 	}
 
 	return nil

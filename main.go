@@ -17,6 +17,7 @@ import (
 	"github.com/Squirrel-Qiu/image-bed/conf"
 	"github.com/Squirrel-Qiu/image-bed/dbb"
 	"github.com/Squirrel-Qiu/image-bed/handle"
+	"github.com/Squirrel-Qiu/image-bed/id"
 )
 
 func main() {
@@ -37,10 +38,9 @@ func run() {
 	dbInstance := dbb.InitDB(db)
 
 	router := gin.New()
-	// todo
 	router.Use(limits.RequestSizeLimiter(32 * 1024 * 1024))
 
-	api := handle.New(dbInstance, credential)
+	api := handle.New(dbInstance, &id.Generate{}, credential)
 	router.POST("upload", api.Upload)
 	router.GET("/get/:resourceId", api.Get)
 

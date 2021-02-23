@@ -1,4 +1,4 @@
-package internal
+package handle
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -17,7 +18,18 @@ import (
 	"github.com/Squirrel-Qiu/image-bed/store"
 )
 
-const URL = "https://..."
+const (
+	URL = "https://..."
+	IdType = "resource_id"
+)
+
+type Resource struct {
+	Id         string
+	Bucket     string
+	Hash       string
+	CreateTime string
+	Size       uint32
+}
 
 func (impl *Implement) Upload(ctx *gin.Context) {
 	content, err := ioutil.ReadAll(ctx.Request.Body)
@@ -44,24 +56,38 @@ func (impl *Implement) Upload(ctx *gin.Context) {
 		return
 	}
 
-	bucket, resourceId, err := store.Store(hash, impl.DB)
+	resourceId, err = impl.Generator.GenerateId()
 	if err != nil {
-		logrus.Errorf("db store failed: %+v", err)
+		logrus.Errorf("generate id failed: %+v", err)
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
 
-	// todo
-	cosClient := store.CloudClient{Credential: impl.Cred, Region: ""}
+	resource := new(Resource)
+	resource.Id = resourceId
+	now := time.Now()
+	resource.Bucket = now.Format("2006-01")
+	resource.CreateTime = now.Format("2006-01-02 15:04")
+	resource.Hash = hash
+	resource.Size = uint32(len(content))
+
+	err = impl.DB.Store(resource)
+	if err != nil {
+		logrus.Errorf("db store resource failed: %+v", err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	cosClient := store.CloudClient{Credential: impl.Cred}
 	cosConn := cosClient.Sign()
 
 	// check bucket if exist
-	_, err = cosConn.HeadBucket(&s3.HeadBucketInput{Bucket: &bucket})
+	_, err = cosConn.HeadBucket(&s3.HeadBucketInput{Bucket: &resource.Bucket})
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == s3.ErrCodeNoSuchBucket {
 				logrus.Info("no such bucket, need to create")
-				_, er := cosConn.CreateBucket(&s3.CreateBucketInput{Bucket: &bucket})
+				_, er := cosConn.CreateBucket(&s3.CreateBucketInput{Bucket: &resource.Bucket})
 				if er != nil {
 					logrus.Errorf("create bucket failed: %+v", er)
 					ctx.Status(http.StatusInternalServerError)
@@ -80,7 +106,7 @@ func (impl *Implement) Upload(ctx *gin.Context) {
 	reader := bytes.NewReader(content)
 	_, err = cosConn.PutObject(&s3.PutObjectInput{
 		Body:       reader,
-		Bucket:     &bucket,
+		Bucket:     &resource.Bucket,
 		ContentMD5: &cm,
 		Key:        &resourceId,
 	})

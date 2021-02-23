@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/Squirrel-Qiu/image-bed/dbb"
-	"github.com/Squirrel-Qiu/image-bed/handle/internal"
+	"github.com/Squirrel-Qiu/image-bed/id"
 	"github.com/Squirrel-Qiu/image-bed/store"
 )
 
@@ -13,6 +13,6 @@ type Api interface {
 	Upload(ctx *gin.Context)
 }
 
-func New(dbInstance dbb.DBApi, credential *store.Credential) Api {
-	return &internal.Implement{DB: dbInstance, Cred: credential}
+func New(dbInstance dbb.DBApi, generator id.Generator, credential *store.Credential) Api {
+	return &Implement{DB: dbInstance, Generator: generator, Cred: credential}
 }

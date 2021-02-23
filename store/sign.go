@@ -14,12 +14,11 @@ type Credential struct {
 	SecretId  string
 	SecretKey string
 	Token     string
+	Region    string
 }
 
 type CloudClient struct {
 	Credential *Credential
-	Region     string
-
 	cosConn *s3.S3
 }
 
@@ -41,7 +40,7 @@ func (me *CloudClient) Sign() *s3.S3 {
 	creds := credentials.NewStaticCredentials(me.Credential.SecretId, me.Credential.SecretKey, me.Credential.Token)
 	sess := session.Must(session.NewSession(&aws.Config{
 		Credentials:      creds,
-		Region:           aws.String(me.Region),
+		Region:           aws.String(me.Credential.Region),
 		EndpointResolver: endpoints.ResolverFunc(resolver),
 	}))
 
