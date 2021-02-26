@@ -4,12 +4,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-
-	"github.com/Squirrel-Qiu/image-bed/store"
 )
 
 func (impl *Implement) Get(ctx *gin.Context) {
@@ -27,28 +23,14 @@ func (impl *Implement) Get(ctx *gin.Context) {
 		return
 	}
 
-	cosClient := store.CloudClient{Credential: impl.Cred, Region: ""}
-	cosConn := cosClient.Sign()
-
-	getObjectOutput, err := cosConn.GetObject(&s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &resourceId,
-	})
+	reader, err := impl.Tool.Take(resourceId, bucket)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			if aerr.Code() == s3.ErrCodeNoSuchKey {
-				logrus.Errorf("the required file is not exist: %+v", err)
-				ctx.Status(http.StatusBadRequest)
-				return
-			}
-		} else {
-			logrus.Errorf("cosConn get object failed: %+v", err)
-			ctx.Status(http.StatusInternalServerError)
-			return
-		}
+		logrus.Errorf("cloud get failed: %+v", err)
+		ctx.Status(http.StatusInternalServerError)
+		return
 	}
 
-	if _, err := io.Copy(ctx.Writer, getObjectOutput.Body); err != nil {
+	if _, err := io.Copy(ctx.Writer, reader); err != nil {
 		logrus.Errorf("copy object failed: %+v", err)
 		ctx.Status(http.StatusInternalServerError)
 		return

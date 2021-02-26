@@ -1,4 +1,4 @@
-package store
+package client
 
 import (
 	"fmt"
@@ -17,16 +17,11 @@ type Credential struct {
 	Region    string
 }
 
-type CloudClient struct {
-	Credential *Credential
-	cosConn *s3.S3
+type Conn struct {
+	CosConn *s3.S3
 }
 
-func (me *CloudClient) Sign() *s3.S3 {
-	if me.cosConn != nil {
-		return me.cosConn
-	}
-
+func Sign(c *Credential) *Conn {
 	resolver := func(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
 		if service == endpoints.S3ServiceID {
 			return endpoints.ResolvedEndpoint{
@@ -37,12 +32,12 @@ func (me *CloudClient) Sign() *s3.S3 {
 		return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
 	}
 
-	creds := credentials.NewStaticCredentials(me.Credential.SecretId, me.Credential.SecretKey, me.Credential.Token)
+	creds := credentials.NewStaticCredentials(c.SecretId, c.SecretKey, c.Token)
 	sess := session.Must(session.NewSession(&aws.Config{
 		Credentials:      creds,
-		Region:           aws.String(me.Credential.Region),
+		Region:           aws.String(c.Region),
 		EndpointResolver: endpoints.ResolverFunc(resolver),
 	}))
 
-	return s3.New(sess)
+	return &Conn{CosConn: s3.New(sess)}
 }

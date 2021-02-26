@@ -4,12 +4,19 @@ import (
 	"database/sql"
 
 	"golang.org/x/xerrors"
-
-	"github.com/Squirrel-Qiu/image-bed/handle"
 )
 
 type Impl struct {
 	DB *sql.DB
+}
+
+
+type Resource struct {
+	Id         string
+	Bucket     string
+	Hash       string
+	CreateTime string
+	Size       uint32
 }
 
 func (db *Impl) GetIdValue(idType string) (idValue int64, err error) {
@@ -26,7 +33,7 @@ func (db *Impl) GetIdValue(idType string) (idValue int64, err error) {
 	return idValue, nil
 }
 
-func (db *Impl) Store(resource *handle.Resource) (err error) {
+func (db *Impl) Store(resource *Resource) (err error) {
 	_, err = db.DB.Exec("INSERT INTO resource (id, bucket, hash, create_time, size) VALUES (?,?,?,?,?)",
 		resource.Id, resource.Bucket, resource.Hash, resource.CreateTime, resource.Size)
 	if err != nil {

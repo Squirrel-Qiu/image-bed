@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/xerrors"
 
+	"github.com/Squirrel-Qiu/image-bed/client"
 	"github.com/Squirrel-Qiu/image-bed/conf"
 	"github.com/Squirrel-Qiu/image-bed/dbb"
 	"github.com/Squirrel-Qiu/image-bed/handle"
@@ -40,7 +41,8 @@ func run() {
 	router := gin.New()
 	router.Use(limits.RequestSizeLimiter(32 * 1024 * 1024))
 
-	api := handle.New(dbInstance, &id.Generate{}, credential)
+	sign := client.Sign(credential)
+	api := handle.New(dbInstance, &id.Generate{DB: dbInstance}, sign)
 	router.POST("upload", api.Upload)
 	router.GET("/get/:resourceId", api.Get)
 

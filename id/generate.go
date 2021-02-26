@@ -12,20 +12,19 @@ import (
 )
 
 type Generator interface {
-	GenerateId() (id string, err error)
+	GenerateId(idType string) (id string, err error)
 }
 
 type Generate struct {
 	DB dbb.DBApi
-	IdType string
 	IdList []string
 }
 
-func (g *Generate) GenerateId() (id string, err error) {
+func (g *Generate) GenerateId(idType string) (id string, err error) {
 	var mutex sync.Mutex
 	mutex.Lock()
 	if len(g.IdList) == 0 {
-		idValue, err := g.DB.GetIdValue(g.IdType)
+		idValue, err := g.DB.GetIdValue(idType)
 		if err != nil {
 			return "", xerrors.Errorf("get id value failed: %w", err)
 		}

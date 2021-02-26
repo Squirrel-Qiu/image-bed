@@ -1,13 +1,13 @@
 package handle
 
 import (
+	"github.com/Squirrel-Qiu/image-bed/client"
 	"github.com/Squirrel-Qiu/image-bed/dbb"
 	"github.com/Squirrel-Qiu/image-bed/id"
-	"github.com/Squirrel-Qiu/image-bed/store"
 )
 
 type Implement struct {
-	DB dbb.DBApi
+	DB        dbb.DBApi
 	Generator id.Generator
-	Cred *store.Credential
+	Tool client.Tool
 }
