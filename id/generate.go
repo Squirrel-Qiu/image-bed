@@ -23,6 +23,7 @@ type Generate struct {
 func (g *Generate) GenerateId(idType string) (id string, err error) {
 	var mutex sync.Mutex
 	mutex.Lock()
+	defer mutex.Unlock()
 	if len(g.IdList) == 0 {
 		idValue, err := g.DB.GetIdValue(idType)
 		if err != nil {
@@ -37,9 +38,8 @@ func (g *Generate) GenerateId(idType string) (id string, err error) {
 			g.IdList = append(g.IdList, m[:10])
 		}
 	}
-	mutex.Unlock()
 
-	id = g.IdList[len(g.IdList)]
+	id = g.IdList[len(g.IdList)-1]
 	g.IdList = g.IdList[:len(g.IdList)]
 
 	return id, nil
