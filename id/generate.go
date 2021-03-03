@@ -40,7 +40,7 @@ func (g *Generate) GenerateId(idType string) (id string, err error) {
 	}
 
 	id = g.IdList[len(g.IdList)-1]
-	g.IdList = g.IdList[:len(g.IdList)]
+	g.IdList = g.IdList[:len(g.IdList)-1]
 
 	return id, nil
 }

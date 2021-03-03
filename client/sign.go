@@ -13,12 +13,13 @@ import (
 type Credential struct {
 	SecretId  string
 	SecretKey string
-	Token     string
+	APPID     string
 	Region    string
 }
 
 type Conn struct {
 	CosConn *s3.S3
+	APPID   string
 }
 
 func Sign(c *Credential) *Conn {
@@ -32,12 +33,12 @@ func Sign(c *Credential) *Conn {
 		return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
 	}
 
-	creds := credentials.NewStaticCredentials(c.SecretId, c.SecretKey, c.Token)
+	creds := credentials.NewStaticCredentials(c.SecretId, c.SecretKey, "")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Credentials:      creds,
 		Region:           aws.String(c.Region),
 		EndpointResolver: endpoints.ResolverFunc(resolver),
 	}))
 
-	return &Conn{CosConn: s3.New(sess)}
+	return &Conn{CosConn: s3.New(sess), APPID: c.APPID}
 }

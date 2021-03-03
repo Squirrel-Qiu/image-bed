@@ -33,7 +33,7 @@ func TestGet(t *testing.T) {
 	ts.GET("/get/:resourceId", api.Get)
 
 	oParams := "b0804ec967"
-	req, err := http.NewRequest("POST", "https://localhost/get/b0804ec967", bytes.NewBufferString(oParams))
+	req, err := http.NewRequest("POST", "http://localhost:8080/get/b0804ec967", bytes.NewBufferString(oParams))
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected while creating request", err)
 	}

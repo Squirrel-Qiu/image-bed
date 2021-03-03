@@ -36,7 +36,7 @@ func TestUpload(t *testing.T) {
 
 	ts.POST("/upload", api.Upload)
 
-	req, err := http.NewRequest("POST", "https://localhost/upload", file)
+	req, err := http.NewRequest("POST", "http://localhost:8080/upload", file)
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected while creating request", err)
 	}
@@ -52,7 +52,7 @@ func TestUpload(t *testing.T) {
 	// now we execute our request
 	resp := httptest.NewRecorder()
 	ts.ServeHTTP(resp, req)
-	assert.Equal(t, resp.Body, bytes.NewBufferString("https://localhost/b0804ec967"))
+	assert.Equal(t, resp.Body, bytes.NewBufferString("http://localhost:8080/get/b0804ec967"))
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {

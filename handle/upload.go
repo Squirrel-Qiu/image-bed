@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	URL = "https://..."
+	URL = "http://localhost:8080/get/"
 	IdType = "resource_id"
 )
 
@@ -77,8 +77,9 @@ func (impl *Implement) Upload(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
+	logrus.Info("store successfully")
 
-	if _, err := ctx.Writer.WriteString(URL + resourceId); err != nil {
+	if _, err := ctx.Writer.WriteString(URL + resourceId + "\n"); err != nil {
 		logrus.Errorf("put object failed: %+v", err)
 		return
 	}

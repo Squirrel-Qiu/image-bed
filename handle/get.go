@@ -29,6 +29,7 @@ func (impl *Implement) Get(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
+	logrus.Info("get successfully")
 
 	if _, err := io.Copy(ctx.Writer, reader); err != nil {
 		logrus.Errorf("copy object failed: %+v", err)
